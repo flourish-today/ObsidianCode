@@ -1,8 +1,16 @@
 diff --git a/apps/mobile/src/features/connection/ConnectionsNewRouteScreen.tsx b/apps/mobile/src/features/connection/ConnectionsNewRouteScreen.tsx
-index 6f4e85d1..12c207b6 100644
+index 6f4e85d1..76488c54 100644
 --- a/apps/mobile/src/features/connection/ConnectionsNewRouteScreen.tsx
 +++ b/apps/mobile/src/features/connection/ConnectionsNewRouteScreen.tsx
-@@ -206,16 +206,8 @@ function PairingForm({
+@@ -28,6 +28,7 @@ import { useRemoteConnections } from "../../state/use-remote-environment-registr
+ import { SymbolView } from "../../components/ui/AppSymbol";
+ import { hasCloudPublicConfig } from "../cloud/publicConfig";
+ import { CloudEnvironmentRows } from "./CloudEnvironmentRows";
++import { TailscaleCard } from "./TailscaleCard";
+ import { autoConnectReport, devAutoConnectAttemptAtom } from "./devAutoConnect";
+ import { splitEnvironmentSections } from "./environmentSections";
+ import { leaveSettingsPage } from "../settings/settings-navigation";
+@@ -206,16 +207,10 @@ function PairingForm({
          }}
        >
          <View collapsable={false} className="gap-6.5">
@@ -13,7 +21,8 @@ index 6f4e85d1..12c207b6 100644
 -              void handleScanPress();
 -            }}
 -          />
--
++          <TailscaleCard />
+ 
            <View collapsable={false} className="gap-2">
 -            <Text className="px-4 text-sm font-t3-medium text-foreground-muted">Or enter it</Text>
 +            <Text className="px-4 text-sm font-t3-medium text-foreground-muted">Pairing link</Text>

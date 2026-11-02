@@ -8,6 +8,9 @@ version = '0.0.0'
 
 android {
   namespace 'expo.modules.obsidiannetwork'
+  defaultConfig {
+    consumerProguardFiles 'consumer-rules.pro'
+  }
 }
 
 dependencies {

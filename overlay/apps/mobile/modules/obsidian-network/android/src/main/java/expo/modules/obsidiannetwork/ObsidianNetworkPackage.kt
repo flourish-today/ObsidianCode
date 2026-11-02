@@ -14,6 +14,7 @@ class ObsidianNetworkPackage : Package {
       object : ApplicationLifecycleListener {
         override fun onCreate(application: Application) {
           ConnectionAllowlist.install()
+          Tailscale.init(application)
         }
       },
     )

@@ -20,6 +20,18 @@ if [ "$abis" != "arm64-v8a" ]; then
   failed=1
 fi
 
+echo "== Tailscale library"
+tailscale="$work/lib/arm64-v8a/libobsidiantailscale.so"
+if [ ! -f "$tailscale" ]; then
+  echo "FAIL: libobsidiantailscale.so is missing"
+  failed=1
+elif grep -aqE "log[.]tailscale[.](com|io)" "$tailscale"; then
+  echo "FAIL: libobsidiantailscale.so contains Tailscale's log upload"
+  failed=1
+else
+  echo "present, $(du -h "$tailscale" | cut -f1), no log upload"
+fi
+
 echo "== Permissions"
 permissions="$("$aapt2" dump permissions "$apk" | sed -n "s/.*name='\([^']*\)'.*/\1/p" | sort -u)"
 echo "$permissions"
@@ -59,12 +71,12 @@ for banned in \
   fi
 done
 
-echo "== Third-party addresses in the manifest, code and app bundle"
+echo "== Third-party addresses in the manifest, code, native libraries and app bundle"
 # Shown with their surroundings for review. Most are text, not connections: links in error
 # messages, or fragments from the bundle's packed strings (e.g. "github.com/kitten/toqr" + "expo.dev").
 # The connection allowlist blocks them anyway. Only service endpoints the app would contact fail.
 "$aapt2" dump xmltree --file AndroidManifest.xml "$apk" > "$work/manifest.txt"
-python3 -I - "$work/manifest.txt" "$work"/classes*.dex "$work"/assets/*.bundle <<'PY' || failed=1
+python3 -I - "$work/manifest.txt" "$work"/classes*.dex "$work"/lib/*/*.so "$work"/assets/*.bundle <<'PY' || failed=1
 import re, sys
 shown = re.compile(rb"([a-z0-9-]+[.])*(expo[.](dev|io)|axiom[.]co|clerk[.](com|dev|t3[.]codes)|googleapis[.]com|app-measurement[.]com|crashlytics[.]com|sentry[.]io|posthog[.]com)")
 endpoints = re.compile(rb"^(u[.]expo[.]dev|o[.]expo[.]dev|exp[.]host|api[.]axiom[.]co|api[.]clerk[.]com|clerk[.]t3[.]codes|firebase[a-z]*[.]googleapis[.]com|[a-z.]*app-measurement[.]com|[a-z.]*crashlytics[.]com|[a-z.]*sentry[.]io|[a-z.]*posthog[.]com)$")
