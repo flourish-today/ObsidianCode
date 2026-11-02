@@ -1,0 +1,1 @@
+This is a fork of T3 code with reduced permissions, all telemetry and third-party connections removed, tailscale added to the app itself so you don't have to worry about running Tailscale as the Android app taking up your VPN slot. It's also reduced size by like four because it's only ARM64.
