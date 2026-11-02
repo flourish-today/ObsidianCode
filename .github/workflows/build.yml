@@ -84,7 +84,8 @@ jobs:
         env:
           PNPM_VERSION: ${{ steps.versions.outputs.pnpm }}
         run: |
-          npm install -g "pnpm@$PNPM_VERSION"
+          # npm checks the download against the registry's checksum; pnpm needs no install scripts.
+          npm install -g --ignore-scripts "pnpm@$PNPM_VERSION"
           pnpm install --frozen-lockfile --filter=@t3tools/mobile...
       - name: Build
         working-directory: t3/apps/mobile
