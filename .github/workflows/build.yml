@@ -60,17 +60,11 @@ jobs:
         with:
           path: oc
           persist-credentials: false
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: pingdotgg/t3code
-          ref: ${{ needs.check.outputs.tag }}
-          path: t3
-          persist-credentials: false
-          # .repos holds a broken submodule entry; upstream's own workflows skip it the same way.
-          sparse-checkout: |
-            /*
-            !/.repos/
-          sparse-checkout-cone-mode: false
+      # A plain clone: actions/checkout fails on upstream's broken .repos submodule entries.
+      - name: Fetch T3 Code
+        env:
+          TAG: ${{ needs.check.outputs.tag }}
+        run: git clone --quiet --depth 1 --branch "$TAG" https://github.com/pingdotgg/t3code.git t3
       - id: versions
         working-directory: t3
         run: |
