@@ -49,6 +49,7 @@ for banned in \
   Lexpo/modules/camera/ \
   Lexpo/modules/observe/ \
   Lexpo/modules/application/ \
+  Lexpo/modules/appmetrics/ \
   Lexpo/modules/t3agentnotifications/; do
   found="$(grep -F "$banned" <<<"$classes" | head -5 || true)"
   if [ -n "$found" ]; then

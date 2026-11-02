@@ -29,6 +29,7 @@ manifest.expo.autolinking.exclude = [
   ...(manifest.expo.autolinking.exclude ?? []),
   "@clerk/expo",
   "@clerk/expo-native-components",
+  "expo-app-metrics",
   "expo-application",
   "expo-camera",
   "expo-notifications",

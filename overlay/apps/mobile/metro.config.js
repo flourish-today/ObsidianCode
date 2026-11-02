@@ -12,7 +12,7 @@ const STUBS = {
   "expo-observe": "expo-observe.js",
   "expo-updates": "expo-updates.js",
 };
-const REMOVED = ["@clerk/", "expo-application/", "expo-camera/", "expo-notifications/", "expo-observe/", "expo-updates/"];
+const REMOVED = ["@clerk/", "expo-app-metrics", "expo-application/", "expo-camera/", "expo-notifications/", "expo-observe/", "expo-updates/"];
 const STUB_DIR = path.join(__dirname, "obsidiancode", "stubs");
 
 module.exports = Promise.resolve(require("./metro.config.upstream.js")).then((config) => {
