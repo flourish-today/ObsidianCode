@@ -66,6 +66,11 @@ jobs:
           ref: ${{ needs.check.outputs.tag }}
           path: t3
           persist-credentials: false
+          # .repos holds a broken submodule entry; upstream's own workflows skip it the same way.
+          sparse-checkout: |
+            /*
+            !/.repos/
+          sparse-checkout-cone-mode: false
       - id: versions
         working-directory: t3
         run: |
