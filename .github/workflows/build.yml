@@ -140,3 +140,24 @@ jobs:
           sha256sum "ObsidianCode-$TAG.apk" > "ObsidianCode-$TAG.apk.sha256"
           gh release create "$TAG" "ObsidianCode-$TAG.apk" "ObsidianCode-$TAG.apk.sha256" -R "$GITHUB_REPOSITORY" \
             --title "ObsidianCode $TAG" --notes "Built from T3 Code $T3_TAG."
+
+  # Build-only runs: a draft release (visible only to the owner, no tag) holds the APK, still
+  # signed with Expo's public debug key, so it can be downloaded for emulator tests.
+  test-draft:
+    needs: [check, build]
+    if: github.event_name == 'workflow_dispatch' && !inputs.release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: apk
+      - name: Upload as a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: test-${{ needs.check.outputs.release }}-run${{ github.run_number }}
+        run: |
+          mv ObsidianCode.apk "ObsidianCode-$NAME.apk"
+          gh release create "$NAME" "ObsidianCode-$NAME.apk" -R "$GITHUB_REPOSITORY" --draft \
+            --title "Test build $NAME (debug-signed, not for phones)" --notes "Build-only run for emulator tests."
