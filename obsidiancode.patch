@@ -1,0 +1,22 @@
+diff --git a/apps/mobile/src/features/connection/ConnectionsNewRouteScreen.tsx b/apps/mobile/src/features/connection/ConnectionsNewRouteScreen.tsx
+index 6f4e85d1..12c207b6 100644
+--- a/apps/mobile/src/features/connection/ConnectionsNewRouteScreen.tsx
++++ b/apps/mobile/src/features/connection/ConnectionsNewRouteScreen.tsx
+@@ -206,16 +206,8 @@ function PairingForm({
+         }}
+       >
+         <View collapsable={false} className="gap-6.5">
+-          <PairingScanCard
+-            cameraActive={cameraPermission?.granted === true && screenFocused && !scanComplete}
+-            onScan={handleQrScan}
+-            onScanPress={() => {
+-              void handleScanPress();
+-            }}
+-          />
+-
+           <View collapsable={false} className="gap-2">
+-            <Text className="px-4 text-sm font-t3-medium text-foreground-muted">Or enter it</Text>
++            <Text className="px-4 text-sm font-t3-medium text-foreground-muted">Pairing link</Text>
+             <View
+               collapsable={false}
+               className={cn(
