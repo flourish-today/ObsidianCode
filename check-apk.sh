@@ -59,12 +59,30 @@ for banned in \
 done
 
 echo "== Third-party addresses in the manifest, code and app bundle"
-# docs.expo.dev only appears in error messages that link to Expo's documentation.
-strings_found="$({ "$aapt2" dump xmltree --file AndroidManifest.xml "$apk"; cat "$work"/classes*.dex "$work"/assets/*.bundle 2>/dev/null; } | LC_ALL=C grep -a -o -E '([a-z0-9-]+\.)*(expo\.dev|expo\.io|axiom\.co|clerk\.com|clerk\.t3\.codes|googleapis\.com|app-measurement\.com|crashlytics\.com|sentry\.io|posthog\.com)' | grep -v -x 'docs\.expo\.dev' | sort | uniq -c || true)"
-echo "${strings_found:-none}"
-if [ -n "$strings_found" ]; then
-  echo "FAIL: third-party addresses left"
-  failed=1
-fi
+# Shown with their surroundings for review. Most are text, not connections: links in error
+# messages, or fragments from the bundle's packed strings (e.g. "github.com/kitten/toqr" + "expo.dev").
+# The connection allowlist blocks them anyway. Only service endpoints the app would contact fail.
+"$aapt2" dump xmltree --file AndroidManifest.xml "$apk" > "$work/manifest.txt"
+python3 -I - "$work/manifest.txt" "$work"/classes*.dex "$work"/assets/*.bundle <<'PY' || failed=1
+import re, sys
+shown = re.compile(rb"([a-z0-9-]+[.])*(expo[.](dev|io)|axiom[.]co|clerk[.](com|dev|t3[.]codes)|googleapis[.]com|app-measurement[.]com|crashlytics[.]com|sentry[.]io|posthog[.]com)")
+endpoints = re.compile(rb"^(u[.]expo[.]dev|o[.]expo[.]dev|exp[.]host|api[.]axiom[.]co|api[.]clerk[.]com|clerk[.]t3[.]codes|firebase[a-z]*[.]googleapis[.]com|[a-z.]*app-measurement[.]com|[a-z.]*crashlytics[.]com|[a-z.]*sentry[.]io|[a-z.]*posthog[.]com)$")
+seen, bad = set(), False
+for path in sys.argv[1:]:
+    data = open(path, "rb").read()
+    for match in shown.finditer(data):
+        host = match.group(0)
+        if host == b"docs.expo.dev":
+            continue
+        context = re.sub(rb"[^ -~]", b".", data[max(0, match.start() - 60):match.end() + 40]).decode()
+        if (host, context) in seen:
+            continue
+        seen.add((host, context))
+        fail = bool(endpoints.match(host))
+        bad |= fail
+        print(("FAIL " if fail else "     ") + host.decode() + "  in " + path.rsplit("/", 1)[-1] + ": " + context)
+print("none" if not seen else "")
+sys.exit(1 if bad else 0)
+PY
 
 exit "$failed"
