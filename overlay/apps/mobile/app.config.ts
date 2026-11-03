@@ -46,6 +46,22 @@ function withObsidianSplash(plugin: Plugin): Plugin {
   ];
 }
 
+// Home-screen shortcuts (long-press the app icon) use the new icon too.
+function withObsidianQuickActions(plugin: Plugin): Plugin {
+  if (!Array.isArray(plugin) || plugin[0] !== "expo-quick-actions") return plugin;
+  const options = (plugin[1] ?? {}) as Record<string, any>;
+  return [
+    plugin[0],
+    {
+      ...options,
+      androidIcons: {
+        ...options.androidIcons,
+        shortcut_icon: { foregroundImage: ICONS.foreground, backgroundColor: "#000000" },
+      },
+    },
+  ];
+}
+
 const { owner: _owner, runtimeVersion: _runtimeVersion, ...base } = upstream;
 
 // Keeps only the extra keys the app needs; drops the relay, Clerk, Axiom and EAS settings.
@@ -77,7 +93,8 @@ const config: ExpoConfig = {
   plugins: [
     ...(upstream.plugins ?? [])
       .filter((plugin) => !REMOVED_PLUGINS.has(pluginName(plugin)))
-      .map(withObsidianSplash),
+      .map(withObsidianSplash)
+      .map(withObsidianQuickActions),
     "./plugins/withObsidianCode.cjs",
   ],
   extra,
