@@ -1,8 +1,12 @@
 package expo.modules.obsidiannetwork
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
 import android.util.Log
 import java.io.File
+import java.net.NetworkInterface
 import java.util.concurrent.Executors
 import org.json.JSONObject
 
@@ -59,11 +63,62 @@ object Tailscale {
   // Whether the Go library has been loaded (only on the worker thread).
   private var loaded = false
 
+  // Android doesn't let the Go library list network interfaces itself, so they're read here and
+  // handed over before starting and whenever the network changes.
+  private fun interfacesText(): String =
+    try {
+      NetworkInterface.getNetworkInterfaces()?.toList().orEmpty().joinToString("\n") { ni ->
+        val flags = buildString {
+          if (ni.isUp) append('u')
+          if (ni.isLoopback) append('l')
+          if (ni.isPointToPoint) append('p')
+          if (ni.supportsMulticast()) append('m')
+        }
+        val addresses = ni.interfaceAddresses.joinToString(" ") {
+          "${it.address.hostAddress?.substringBefore('%')}/${it.networkPrefixLength}"
+        }
+        listOf(ni.name, ni.index, ni.mtu, flags, addresses).joinToString("\t")
+      }
+    } catch (error: Exception) {
+      Log.w(TAG, "Couldn't list network interfaces", error)
+      ""
+    }
+
+  private fun pushInterfaces() {
+    if (loaded) TailscaleNative.setInterfaces(interfacesText())
+  }
+
+  private var watchingNetwork = false
+
+  private fun watchNetwork() {
+    if (watchingNetwork) return
+    watchingNetwork = true
+    val manager = appContext.getSystemService(ConnectivityManager::class.java) ?: return
+    try {
+      manager.registerDefaultNetworkCallback(
+        object : ConnectivityManager.NetworkCallback() {
+          override fun onAvailable(network: Network) = update()
+
+          override fun onLost(network: Network) = update()
+
+          override fun onLinkPropertiesChanged(network: Network, properties: LinkProperties) = update()
+
+          private fun update() {
+            worker.execute { pushInterfaces() }
+          }
+        },
+      )
+    } catch (error: Exception) {
+      Log.w(TAG, "Can't watch for network changes", error)
+    }
+  }
+
   private fun startNow(authKey: String): String {
     val result = try {
-      val r = TailscaleNative.start(stateDir().absolutePath, authKey, HOSTNAME)
+      TailscaleNative.setInterfaces(interfacesText())
       loaded = true
-      r
+      watchNetwork()
+      TailscaleNative.start(stateDir().absolutePath, authKey, HOSTNAME)
     } catch (error: Throwable) {
       Log.e(TAG, "Tailscale didn't start", error)
       return JSONObject().put("error", error.message ?: error.toString()).toString()

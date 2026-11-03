@@ -66,3 +66,8 @@ func Java_expo_modules_obsidiannetwork_TailscaleNative_stop(env *C.JNIEnv, _ C.j
 func Java_expo_modules_obsidiannetwork_TailscaleNative_logout(env *C.JNIEnv, _ C.jclass) C.jstring {
 	return javaString(env, logout())
 }
+
+//export Java_expo_modules_obsidiannetwork_TailscaleNative_setInterfaces
+func Java_expo_modules_obsidiannetwork_TailscaleNative_setInterfaces(env *C.JNIEnv, _ C.jclass, text C.jstring) {
+	setInterfaces(goString(env, text))
+}

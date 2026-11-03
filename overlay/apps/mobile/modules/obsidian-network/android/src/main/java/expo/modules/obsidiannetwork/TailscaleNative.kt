@@ -13,4 +13,6 @@ internal object TailscaleNative {
   @JvmStatic external fun stop(): String
 
   @JvmStatic external fun logout(): String
+
+  @JvmStatic external fun setInterfaces(text: String)
 }
