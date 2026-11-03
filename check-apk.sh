@@ -25,7 +25,9 @@ tailscale="$work/lib/arm64-v8a/libobsidiantailscale.so"
 if [ ! -f "$tailscale" ]; then
   echo "FAIL: libobsidiantailscale.so is missing"
   failed=1
-elif grep -aqE "log[.]tailscale[.](com|io)" "$tailscale"; then
+# Go keeps function names in stripped libraries. The address log.tailscale.com itself stays as
+# harmless text (a constant and a comparison in TLS code), so the uploader's code is checked instead.
+elif grep -aqE "tailscale[.]com/(logtail[.][(][*]Logger[)][.]upload|wgengine/netlog[.])" "$tailscale"; then
   echo "FAIL: libobsidiantailscale.so contains Tailscale's log upload"
   failed=1
 else
