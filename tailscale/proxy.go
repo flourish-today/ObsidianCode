@@ -42,7 +42,10 @@ func newProxy(srv *tsnet.Server) *proxy {
 			IdleConnTimeout:     90 * time.Second,
 		},
 		FlushInterval: -1,
-		ErrorLog:      nil,
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			logf("proxy: %s %s: %v", r.Method, r.URL.Host+r.URL.Path, err)
+			http.Error(w, "ObsidianCode proxy: "+err.Error(), http.StatusBadGateway)
+		},
 	}
 	return p
 }
@@ -53,6 +56,7 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !r.URL.IsAbs() || (r.URL.Scheme != "http" && r.URL.Scheme != "https") {
+		logf("proxy: not a proxy request: %s %s", r.Method, r.URL.Host+r.URL.Path)
 		http.Error(w, "ObsidianCode: proxy requests only", http.StatusBadRequest)
 		return
 	}
@@ -64,7 +68,8 @@ func (p *proxy) tunnel(w http.ResponseWriter, r *http.Request) {
 	target, err := p.dial(ctx, "tcp", r.Host)
 	cancel()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		logf("proxy: CONNECT %s: %v", r.Host, err)
+		http.Error(w, "ObsidianCode proxy: "+err.Error(), http.StatusBadGateway)
 		return
 	}
 	hj, ok := w.(http.Hijacker)

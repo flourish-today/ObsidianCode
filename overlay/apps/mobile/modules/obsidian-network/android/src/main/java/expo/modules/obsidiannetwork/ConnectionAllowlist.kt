@@ -26,7 +26,11 @@ object ConnectionAllowlist : ProxySelector() {
 
   // Port 9 (discard): apps can't listen below 1024, so nothing on the phone answers.
   private const val CLOSED_PORT = 9
-  private val refused = listOf(Proxy(Proxy.Type.HTTP, InetSocketAddress(InetAddress.getLoopbackAddress(), CLOSED_PORT)))
+
+  // 127.0.0.1, where Tailscale's proxy listens. Not InetAddress.getLoopbackAddress(): on Android
+  // that's ::1, so connections to the proxy were refused.
+  private val LOOPBACK: InetAddress = InetAddress.getByAddress("localhost", byteArrayOf(127, 0, 0, 1))
+  private val refused = listOf(Proxy(Proxy.Type.HTTP, InetSocketAddress(LOOPBACK, CLOSED_PORT)))
   private val direct = listOf(Proxy.NO_PROXY)
 
   private val IPV4_LITERAL = Regex("""^\d{1,3}(\.\d{1,3}){3}$""")
@@ -83,10 +87,17 @@ object ConnectionAllowlist : ProxySelector() {
   override fun select(uri: URI?): List<Proxy> {
     val host = uri?.host ?: return refused
     val tailscalePort = Tailscale.proxyPort
-    if (tailscalePort > 0 && isTailscaleHost(host)) {
-      return listOf(Proxy(Proxy.Type.HTTP, InetSocketAddress(InetAddress.getLoopbackAddress(), tailscalePort)))
+    if (isTailscaleHost(host)) {
+      if (tailscalePort > 0) {
+        Log.i(TAG, "$host: through Tailscale (proxy port $tailscalePort)")
+        return listOf(Proxy(Proxy.Type.HTTP, InetSocketAddress(LOOPBACK, tailscalePort)))
+      }
+      Log.i(TAG, "$host: direct (Tailscale is off)")
+      return direct
     }
-    return if (isAllowedHost(host)) direct else refused
+    if (isAllowedHost(host)) return direct
+    Log.i(TAG, "$host: blocked")
+    return refused
   }
 
   private fun normalize(rawHost: String) =
@@ -112,7 +123,9 @@ object ConnectionAllowlist : ProxySelector() {
     }
   }
 
-  override fun connectFailed(uri: URI?, address: SocketAddress?, error: IOException?) {}
+  override fun connectFailed(uri: URI?, address: SocketAddress?, error: IOException?) {
+    Log.w(TAG, "Connection to ${uri?.host} via $address failed: $error")
+  }
 
   fun isAllowedHost(rawHost: String): Boolean {
     val host = normalize(rawHost)
