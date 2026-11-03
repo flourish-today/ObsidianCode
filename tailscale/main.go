@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -68,8 +69,18 @@ func start(dir, authKey, hostname string) string {
 	if cur != nil {
 		return toJSON(result{Port: cur.ln.Addr().(*net.TCPAddr).Port})
 	}
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return toJSON(result{Error: err.Error()})
+	// Android sets no home, cache or temp folder for an app, and Tailscale needs one for its
+	// local log bookkeeping (nothing is uploaded), so they point inside the app's own storage.
+	cache, tmp := filepath.Join(dir, "cache"), filepath.Join(dir, "tmp")
+	for _, d := range []string{dir, cache, tmp} {
+		if err := os.MkdirAll(d, 0o700); err != nil {
+			return toJSON(result{Error: err.Error()})
+		}
+	}
+	os.Setenv("XDG_CACHE_HOME", cache)
+	os.Setenv("TMPDIR", tmp)
+	if os.Getenv("HOME") == "" {
+		os.Setenv("HOME", dir)
 	}
 	srv := &tsnet.Server{
 		Dir:      dir,
