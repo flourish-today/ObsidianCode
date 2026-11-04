@@ -101,6 +101,15 @@ jobs:
             CGO_LDFLAGS="-Wl,-z,max-page-size=16384" \
             go build -trimpath -buildmode=c-shared -tags "$tags" -ldflags="-s -w -buildid=" \
             -o "$out/libobsidiantailscale.so" .
+          # Use the same target and tags so notices track the dependencies in this build.
+          GOOS=android GOARCH=arm64 CGO_ENABLED=1 \
+            CC="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang" \
+            go list -deps -json -tags "$tags" . > "$RUNNER_TEMP/tailscale-packages.json"
+          python3 ../collect-licenses.py "$GITHUB_WORKSPACE/t3" "$RUNNER_TEMP/tailscale-packages.json" \
+            "$GITHUB_WORKSPACE/THIRD-PARTY-NOTICES.txt"
+          assets="$GITHUB_WORKSPACE/t3/apps/mobile/modules/obsidian-network/android/src/main/assets/obsidiancode"
+          mkdir -p "$assets"
+          cp "$GITHUB_WORKSPACE/THIRD-PARTY-NOTICES.txt" "$assets/"
           rm "$out/libobsidiantailscale.h"
           ls -l "$out"
       - name: Install
@@ -125,7 +134,7 @@ jobs:
           ./gradlew --no-daemon :app:assembleRelease
           cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/ObsidianCode.apk"
       - name: Check the APK
-        run: oc/check-apk.sh ObsidianCode.apk
+        run: oc/check-apk.sh ObsidianCode.apk THIRD-PARTY-NOTICES.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -133,6 +142,7 @@ jobs:
           path: |
             ObsidianCode.apk
             dependencies.txt
+            THIRD-PARTY-NOTICES.txt
           if-no-files-found: ignore
           retention-days: 7
 
@@ -163,7 +173,7 @@ jobs:
           rm key.p12
           "$apksigner" verify --print-certs "ObsidianCode-$TAG.apk"
           sha256sum "ObsidianCode-$TAG.apk" > "ObsidianCode-$TAG.apk.sha256"
-          gh release create "$TAG" "ObsidianCode-$TAG.apk" "ObsidianCode-$TAG.apk.sha256" -R "$GITHUB_REPOSITORY" \
+          gh release create "$TAG" "ObsidianCode-$TAG.apk" "ObsidianCode-$TAG.apk.sha256" THIRD-PARTY-NOTICES.txt -R "$GITHUB_REPOSITORY" \
             --title "ObsidianCode $TAG" --notes "Built from T3 Code $T3_TAG."
 
   # Build-only runs: a draft release (visible only to the owner, no tag) holds the APK, still
@@ -184,5 +194,5 @@ jobs:
           NAME: test-${{ needs.check.outputs.release }}-run${{ github.run_number }}
         run: |
           mv ObsidianCode.apk "ObsidianCode-$NAME.apk"
-          gh release create "$NAME" "ObsidianCode-$NAME.apk" -R "$GITHUB_REPOSITORY" --draft \
+          gh release create "$NAME" "ObsidianCode-$NAME.apk" THIRD-PARTY-NOTICES.txt -R "$GITHUB_REPOSITORY" --draft \
             --title "Test build $NAME (debug-signed, not for phones)" --notes "Build-only run for emulator tests."

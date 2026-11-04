@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fails if the APK still holds code, permissions or addresses ObsidianCode removes.
-# Usage: check-apk.sh <apk>   (needs ANDROID_HOME for aapt2)
+# Usage: check-apk.sh <apk> [expected notices]   (needs ANDROID_HOME for aapt2)
 set -euo pipefail
 
 apk="$1"
@@ -9,6 +9,16 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 unzip -q "$apk" -d "$work"
 failed=0
+
+echo "== Open-source notices"
+notices="$work/assets/obsidiancode/THIRD-PARTY-NOTICES.txt"
+if [ ! -s "$notices" ]; then
+  echo "FAIL: bundled open-source notices are missing"
+  failed=1
+elif [ "$#" -ge 2 ] && ! cmp -s "$notices" "$2"; then
+  echo "FAIL: bundled notices differ from the release attachment"
+  failed=1
+fi
 
 echo "== Size: $(du -h "$apk" | cut -f1)"
 
