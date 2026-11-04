@@ -77,6 +77,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Check local notification events
+        # Node's built-in TypeScript support runs these without installing dependencies.
+        run: node --test oc/test_local_notifications*.ts
       - name: Apply ObsidianCode
         run: oc/prepare.sh t3
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0

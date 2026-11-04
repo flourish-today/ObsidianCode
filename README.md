@@ -6,6 +6,10 @@ ObsidianCode is a fork of T3 code with reduced permissions, telemetry, and third
 
 This is for personal use but you can use it.
 
+Local agent alerts can be enabled in Settings → Notifications. They notify you when an
+agent finishes, fails, or needs your response, using the app's existing connection. They
+do not use Firebase or T3 Connect and cannot arrive while Android suspends or closes the app.
+
 Normal builds collect the licenses and notices for ObsidianCode's additions (Tailscale,
 its Android Go dependencies, the Go runtime, and AndroidX WebKit). Each release includes
 `THIRD-PARTY-NOTICES.txt`, also bundled inside the APK at

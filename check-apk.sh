@@ -47,9 +47,13 @@ fi
 echo "== Permissions"
 permissions="$("$aapt2" dump permissions "$apk" | sed -n "s/.*name='\([^']*\)'.*/\1/p" | sort -u)"
 echo "$permissions"
+if ! grep -qx android.permission.POST_NOTIFICATIONS <<<"$permissions"; then
+  echo "FAIL: local notification permission is missing"
+  failed=1
+fi
 for banned in \
   android.permission.CAMERA \
-  android.permission.POST_NOTIFICATIONS \
+  android.permission.POST_PROMOTED_NOTIFICATIONS \
   com.google.android.c2dm.permission.RECEIVE \
   com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE \
   com.google.android.gms.permission.AD_ID; do

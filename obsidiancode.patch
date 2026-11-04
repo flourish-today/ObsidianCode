@@ -158,3 +158,23 @@ index 6f4e85d1..76488c54 100644
              <View
                collapsable={false}
                className={cn(
+diff --git a/apps/mobile/src/features/settings/SettingsRouteScreen.tsx b/apps/mobile/src/features/settings/SettingsRouteScreen.tsx
+--- a/apps/mobile/src/features/settings/SettingsRouteScreen.tsx
++++ b/apps/mobile/src/features/settings/SettingsRouteScreen.tsx
+@@ -143,3 +143,15 @@
+   const { savedConnectionsById } = useSavedRemoteConnections();
+-  return <SettingsList connections={[environmentsRow(Object.keys(savedConnectionsById).length)]} />;
++  return (
++    <SettingsList
++      connections={[
++        environmentsRow(Object.keys(savedConnectionsById).length),
++        {
++          id: "SettingsNotifications",
++          icon: "bell.badge",
++          label: "Notifications",
++          target: "SettingsNotifications",
++        },
++      ]}
++    />
++  );
+ }

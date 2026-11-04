@@ -8,7 +8,6 @@ const REMOVED_PLUGINS = new Set(["@clerk/expo", "expo-camera", "expo-notificatio
 
 const BLOCKED_PERMISSIONS = [
   "android.permission.CAMERA",
-  "android.permission.POST_NOTIFICATIONS",
   "android.permission.POST_PROMOTED_NOTIFICATIONS",
   "com.google.android.c2dm.permission.RECEIVE",
   "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE",
@@ -88,7 +87,12 @@ const config: ExpoConfig = {
     },
     // The workflow's run number, so each release installs over the last.
     versionCode: Number(process.env.OBSIDIANCODE_VERSION_CODE) || 1,
-    blockedPermissions: [...(upstream.android?.blockedPermissions ?? []), ...BLOCKED_PERMISSIONS],
+    blockedPermissions: [
+      ...(upstream.android?.blockedPermissions ?? []).filter(
+        (permission) => permission !== "android.permission.POST_NOTIFICATIONS",
+      ),
+      ...BLOCKED_PERMISSIONS,
+    ],
   },
   plugins: [
     ...(upstream.plugins ?? [])
