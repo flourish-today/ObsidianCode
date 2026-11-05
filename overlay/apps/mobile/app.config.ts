@@ -75,6 +75,9 @@ const extra = Object.fromEntries(
 const config: ExpoConfig = {
   ...base,
   name: "ObsidianCode",
+  // The release tag without its "v" (like 0.1.7-7b778d7), so Obtainium can match the
+  // installed app to its release. Local builds keep upstream's version.
+  version: process.env.OBSIDIANCODE_VERSION_NAME || upstream.version,
   updates: { enabled: false },
   android: {
     ...upstream.android,

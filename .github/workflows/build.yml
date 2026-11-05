@@ -129,7 +129,9 @@ jobs:
           APP_VARIANT: production
           EXPO_NO_TELEMETRY: "1"
           OBSIDIANCODE_VERSION_CODE: ${{ github.run_number }}
+          RELEASE: ${{ needs.check.outputs.release }}
         run: |
+          export OBSIDIANCODE_VERSION_NAME="${RELEASE#v}"
           pnpm exec expo prebuild --platform android --no-install
           cd android
           ./gradlew --no-daemon :app:dependencies --configuration releaseRuntimeClasspath > "$GITHUB_WORKSPACE/dependencies.txt"
