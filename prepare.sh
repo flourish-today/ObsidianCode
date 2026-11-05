@@ -15,6 +15,9 @@ mv "$mobile/metro.config.js" "$mobile/metro.config.upstream.js"
 
 # Upstream's Android notification module depends on Firebase messaging.
 rm -r "$mobile/modules/t3-agent-notifications"
+# Upstream's Android dictation module depends on Google ML Kit. Its JavaScript loads it as optional,
+# so without it dictation is simply unavailable.
+rm -r "$mobile/modules/t3-voice-transcription"
 
 cp -R "$here/overlay/." "$upstream/"
 
