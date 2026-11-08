@@ -16,5 +16,5 @@ ObsidianCode also reduced the app size of T3Code by around four because it's onl
 - removes all third-party connections and telemetry
 - removes unnecessary permissions
 - cuts the app size by ~75%
-- adds Tailscale support into the app, so you don't lose your only VPN slot running Tailscale on Android, and CloudFlare doesn't see your traffic.
+- adds Tailscale support into the app, so you don't lose your only VPN slot running Tailscale on Android
 - replaces Google-based push notifications with local ones, so you can wreck your battery life privately
