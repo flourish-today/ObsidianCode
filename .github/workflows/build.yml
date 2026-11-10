@@ -2,15 +2,15 @@ name: Build ObsidianCode
 
 # Daily: if T3 Code has a new stable release, or this repo changed, build its Android app with
 # ObsidianCode's changes (prepare.sh). Release tags are T3 Code's tag plus the start of this
-# repo's commit, e.g. v0.1.6-1a2b3c4. The build job has no secrets. Signing and publishing wait
-# for approval in the "release" environment.
+# repo's commit, e.g. v0.1.6-1a2b3c4. The build job has no secrets. Signing runs on a fresh
+# runner, with main-only environment secrets; passing builds publish automatically.
 on:
   schedule:
     - cron: "41 6 * * *"
   workflow_dispatch:
     inputs:
       release:
-        description: "Sign and publish after approval (off: build and check only)"
+        description: "Sign and publish automatically (off: build and check only)"
         type: boolean
         default: true
       upstream_tag:
@@ -19,6 +19,10 @@ on:
         default: ""
 
 permissions: {}
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 jobs:
   check:
@@ -37,6 +41,11 @@ jobs:
           PUBLISH: ${{ github.event_name == 'schedule' || inputs.release }}
         run: |
           tag="${UPSTREAM_TAG:-$(gh api repos/pingdotgg/t3code/releases/latest --jq .tag_name)}"
+          # Reject control characters, option-like names and unexpected refs before output/file use.
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9][A-Za-z0-9.-]*)?$ ]]; then
+            echo "Unsupported upstream release tag" >&2
+            exit 1
+          fi
           release="$tag-${GITHUB_SHA:0:7}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "release=$release" >> "$GITHUB_OUTPUT"
@@ -153,31 +162,39 @@ jobs:
 
   release:
     needs: [check, build]
-    if: github.event_name == 'schedule' || inputs.release
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || inputs.release)
     runs-on: ubuntu-latest
     environment: release
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: apk
-      - name: Sign and publish
+      # No checkout, build scripts or package installs on the signing runner.
+      - name: Sign APK
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          TAG: ${{ needs.check.outputs.release }}
+        run: |
+          umask 077
+          signing_key="$(mktemp "$RUNNER_TEMP/obsidiancode-key.XXXXXX")"
+          trap 'rm -f -- "$signing_key"' EXIT
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$signing_key"
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner"
+          "$apksigner" sign --ks "$signing_key" --ks-type PKCS12 --ks-pass env:KEY_PASSWORD --key-pass env:KEY_PASSWORD \
+            --v1-signing-enabled false \
+            --out "ObsidianCode-$TAG.apk" ObsidianCode.apk
+          "$apksigner" verify --print-certs "ObsidianCode-$TAG.apk"
+          sha256sum "ObsidianCode-$TAG.apk" > "ObsidianCode-$TAG.apk.sha256"
+      - name: Publish signed APK
+        env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.check.outputs.release }}
           T3_TAG: ${{ needs.check.outputs.tag }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > key.p12
-          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner"
-          "$apksigner" sign --ks key.p12 --ks-type PKCS12 --ks-pass env:KEY_PASSWORD --key-pass env:KEY_PASSWORD \
-            --v1-signing-enabled false \
-            --out "ObsidianCode-$TAG.apk" ObsidianCode.apk
-          rm key.p12
-          "$apksigner" verify --print-certs "ObsidianCode-$TAG.apk"
-          sha256sum "ObsidianCode-$TAG.apk" > "ObsidianCode-$TAG.apk.sha256"
           gh release create "$TAG" "ObsidianCode-$TAG.apk" "ObsidianCode-$TAG.apk.sha256" THIRD-PARTY-NOTICES.txt -R "$GITHUB_REPOSITORY" \
             --title "ObsidianCode $TAG" --notes "Built from T3 Code $T3_TAG."
 
@@ -185,7 +202,7 @@ jobs:
   # signed with Expo's public debug key, so it can be downloaded for emulator tests.
   test-draft:
     needs: [check, build]
-    if: github.event_name == 'workflow_dispatch' && !inputs.release
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && !inputs.release
     runs-on: ubuntu-latest
     permissions:
       contents: write
