@@ -41,10 +41,9 @@ diff --git a/apps/mobile/src/components/CompactBrandTitle.tsx b/apps/mobile/src/
 index 7a251a2e..76493a75 100644
 --- a/apps/mobile/src/components/CompactBrandTitle.tsx
 +++ b/apps/mobile/src/components/CompactBrandTitle.tsx
-@@ -1,13 +1,10 @@
+@@ -1,12 +1,9 @@
  import { NATIVE_WORKSPACE_COLUMNS_SUPPORTED } from "../native/NativeWorkspaceColumns";
 -import Constants from "expo-constants";
- import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
  import { useState } from "react";
  import { Platform, View } from "react-native";
  
@@ -55,7 +54,7 @@ index 7a251a2e..76493a75 100644
  import { useAndroidControlSizing } from "./ui/useAndroidControlSizing";
  
  const BRAND_MAX_FONT_SCALE = 1.4;
-@@ -25,7 +22,6 @@ export function CompactBrandTitle(
+@@ -24,7 +21,6 @@ export function CompactBrandTitle(
      readonly fit?: boolean;
    } = {},
  ) {
@@ -63,7 +62,7 @@ index 7a251a2e..76493a75 100644
    const titleOffset = brandTitleOffset();
    const { scale } = useAndroidControlSizing();
    const [availableWidth, setAvailableWidth] = useState<number | null>(null);
-@@ -40,7 +36,7 @@ export function CompactBrandTitle(
+@@ -39,7 +35,7 @@ export function CompactBrandTitle(
          props.fit && showStage ? (event) => setFullWidth(event.nativeEvent.layout.width) : undefined
        }
        aria-level={1}
@@ -72,7 +71,7 @@ index 7a251a2e..76493a75 100644
        accessible
        role="heading"
        className="flex-row items-center gap-1.5"
-@@ -50,35 +46,14 @@ export function CompactBrandTitle(
+@@ -49,35 +45,14 @@ export function CompactBrandTitle(
          props.fit && { flexShrink: 0 },
        ]}
      >
