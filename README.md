@@ -4,7 +4,7 @@
 
 ## about
 
-Obsidian doesn't have telemetry; neither should your open-source
+Obsidian doesn't have telemetry; neither should your open-source agent
 control plane's Android companion app.
 
 ObsidianCode is a fork of T3 code with reduced permissions, telemetry, and third-party connections removed. The only connections it makes are to tailscale. tailscale is added to the app itself so you don't have to worry about running tailscale as the Android app taking up your VPN slot. 
