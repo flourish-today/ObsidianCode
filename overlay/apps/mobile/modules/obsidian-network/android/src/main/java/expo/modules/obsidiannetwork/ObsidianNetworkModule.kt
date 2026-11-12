@@ -3,7 +3,7 @@ package expo.modules.obsidiannetwork
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
-// Tailscale controls (JSON responses) and local Android notification functions.
+// Tailscale controls (JSON responses), local Android notifications and the keep-connected service.
 class ObsidianNetworkModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("ObsidianNetwork")
@@ -24,6 +24,16 @@ class ObsidianNetworkModule : Module() {
     }
     AsyncFunction("dismissLocalNotification") { path: String ->
       appContext.reactContext?.let { LocalAgentNotifications.dismiss(it, path) }
+    }
+
+    AsyncFunction("keepConnected") {
+        title: String, text: String, holdCpu: Boolean, stopAtMs: Double ->
+      appContext.reactContext?.let {
+        KeepConnectedService.update(it, title, text, holdCpu, stopAtMs.toLong())
+      } ?: false
+    }
+    AsyncFunction("stopKeepingConnected") {
+      appContext.reactContext?.let { KeepConnectedService.stop(it) }
     }
   }
 }
