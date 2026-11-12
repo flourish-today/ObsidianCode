@@ -80,9 +80,10 @@ export function SettingsNotificationsRouteScreen() {
           />
         </SettingsSection>
         <Text className="text-sm text-foreground-muted">
-          Alerts work while ObsidianCode is running and connected to your environment. Android may
-          pause the connection in the background; alerts cannot arrive while the app is suspended or
-          closed. The thread you are viewing stays quiet. Tap an alert to open its thread.
+          ObsidianCode stays connected while you use it and for 30 minutes after you leave, longer
+          while an agent is still working (up to 3 hours). A "Connected to" notification shows while
+          it does. After that, Android pauses the app and alerts wait until you open it again. The
+          thread you are viewing stays quiet. Tap an alert to open its thread.
         </Text>
       </ScrollView>
     </SettingsScreen>
